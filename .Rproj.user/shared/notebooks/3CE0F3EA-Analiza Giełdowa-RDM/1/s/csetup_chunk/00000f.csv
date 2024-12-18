@@ -1,0 +1,54 @@
+"0",""
+"0","knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)"
+"0","library(ggplot2)"
+"0","library(dplyr)"
+"0","library(readr)"
+"0","library(scales)"
+"2","
+Dołączanie pakietu: ‘scales’
+
+"
+"2","Następujący obiekt został zakryty z ‘package:readr’:
+
+    col_factor
+
+"
+"0","library(plotly)"
+"2","Ostrzeżenie: pakiet ‘plotly’ został zbudowany w wersji R 4.4.2"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"2","Registered S3 method overwritten by 'htmlwidgets':
+  method           from         
+  print.htmlwidget tools:rstudio
+"
+"2","
+Dołączanie pakietu: ‘plotly’
+
+"
+"2","Następujący obiekt został zakryty z ‘package:ggplot2’:
+
+    last_plot
+
+"
+"2","Następujący obiekt został zakryty z ‘package:stats’:
+
+    filter
+
+"
+"2","Następujący obiekt został zakryty z ‘package:graphics’:
+
+    layout
+
+"
+"0","library(corrplot)"
+"2","Ostrzeżenie: pakiet ‘corrplot’ został zbudowany w wersji R 4.4.2"
+"2","corrplot 0.95 loaded
+"
+"0","# Wczytanie danych"
+"0","data <- read.csv(""BTC-USD.csv"")"
+"0",""
+"0","# Konwersja daty"
+"0","data$Date <- as.Date(data$Date, format = ""%Y-%m-%d"")"
+"0",""

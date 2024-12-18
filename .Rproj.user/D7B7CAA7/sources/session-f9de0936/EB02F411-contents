@@ -1,0 +1,195 @@
+---
+title: "Analiza giełdowa"
+author: "Hubert Gogola"
+date: "2024-12-18"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(scales)
+library(plotly)
+library(corrplot)
+
+# Wczytanie danych
+data <- read.csv("BTC-USD.csv")
+
+# Konwersja daty
+data$Date <- as.Date(data$Date, format = "%Y-%m-%d")
+
+```
+
+# Podstawowe statystyki opisowe
+
+```{r}
+# Podstawowe statystyki
+summary(data)
+
+```
+
+Powyższy kod przedstawia podstawowe statystyki dla każdej kolumny. Pozwala to zidentyfikować zakres danych, wartości minimalne, maksymalne oraz średnie.
+
+# Wykres dla parametru Close
+
+```{r}
+# Wybór parametru do wizualizacji
+selected_variable <- "Close"  # Zmienna: Open, High, Low, Close, Adj Close, Volume
+
+# Wykres dla wybranego parametru
+ggplot(data, aes(x = Date, y = .data[[selected_variable]])) +
+  geom_line(color = "blue", size = 1) +
+  labs(title = paste("Wykres zmian wartości zmiennej:", selected_variable),
+       x = "Data",
+       y = selected_variable) +
+  theme_minimal() 
+
+```
+
+Wykres prezentuje zmiany wybranego parametru (np. **Close**) w czasie, co pozwala analizować jego trendy.
+
+# Średnia krocząca (MA7)
+
+```{r}
+# Obliczenie średniej kroczącej
+data <- data %>%
+  arrange(Date) %>%
+  mutate(MA7 = zoo::rollmean(Close, k = 7, fill = NA))
+
+# Wykres z zaznaczeniem średniej kroczącej
+ggplot(data, aes(x = Date)) +
+  geom_line(aes(y = Close), color = "grey", size = 1, alpha = 0.8) +
+  geom_line(aes(y = MA7), color = "red", size = 1) +
+  labs(title = "Średnia krocząca dla cen zamknięcia",
+       x = "Data",
+       y = "Cena zamknięcia / MA7") +
+  theme_minimal()
+
+
+```
+
+Średnia krocząca pomaga wygładzić zmienność cen i wskazuje na długoterminowe trendy.
+
+# Wykres wolumenu transakcji
+
+```{r}
+
+# Wykres wolumenu
+ggplot(data, aes(x = Date, y = Volume)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Wolumen transakcji w czasie",
+       x = "Data",
+       y = "Wolumen") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::comma)
+
+
+```
+
+Wykres przedstawia dzienny wolumen transakcji, co może pomóc w identyfikacji okresów wzmożonej aktywności na rynku.
+
+# Analiza dla określonego przedziału czasowego
+
+```{r}
+# Zakres dat do filtrowania
+start_date <- as.Date("2020-01-01")
+end_date <- as.Date("2021-01-31")
+
+# Filtrowanie danych
+filtered_data <- data %>%
+  filter(Date >= start_date & Date <= end_date)
+
+# Wyświetlenie tabeli
+head(filtered_data)
+
+```
+
+Przefiltrowanie danych pozwala skupić się na określonym okresie czasowym (np. pandemia COVID-19 w 2020 roku).
+
+# Podsumowanie statystyczne
+
+```{r}
+summary_stats <- data %>%
+  summarise(
+    Średnia_Cena_Zamknięcia = mean(Close, na.rm = TRUE),
+    Maksymalna_Cena = max(High, na.rm = TRUE),
+    Minimalna_Cena = min(Low, na.rm = TRUE),
+    Średni_Wolumen = mean(Volume, na.rm = TRUE)
+  )
+
+summary_stats
+```
+
+Podsumowanie statystyczne pokazuje wartości średnie, minimalne i maksymalne dla cen oraz średni wolumen.
+
+# Zmienność cen (High - Low)
+
+```{r}
+# Dodanie zmienności cen
+data <- data %>%
+  mutate(Volatility = High - Low)
+
+# Wykres zmienności cen
+ggplot(data, aes(x = Date, y = Volatility)) +
+  geom_bar(stat = "identity", fill = "orange") +
+  labs(
+    title = "Zmienność cen (High - Low)",
+    x = "Data",
+    y = "Zmienność"
+  ) +
+  theme_minimal()
+
+```
+
+Zmienność cen wskazuje na zakres dziennej różnicy między ceną maksymalną a minimalną.
+
+# Korelacja między zmiennymi numerycznymi
+
+```{r}
+# Wybranie kolumn numerycznych i obliczenie korelacji
+cor_matrix <- data %>%
+  select(Open, High, Low, Close, Volume) %>%
+  cor(use = "complete.obs")
+
+# Wizualizacja macierzy korelacji
+
+corrplot(cor_matrix, method = "circle", type = "upper", tl.col = "black", tl.srt = 45)
+
+```
+
+Wizualizacja korelacji pokazuje relacje między zmiennymi numerycznymi, np. **Close** jest silnie skorelowane z **High** i **Low**.
+
+# Interaktywny wykres ceny zamknięcia
+
+```{r}
+
+
+# Interaktywny wykres ceny zamknięcia
+fig <- plot_ly(data, x = ~Date, y = ~Close, type = 'scatter', mode = 'lines',
+               line = list(color = 'blue'))
+fig <- fig %>% layout(
+  title = "Interaktywny wykres ceny zamknięcia",
+  xaxis = list(title = "Data"),
+  yaxis = list(title = "Cena zamknięcia")
+)
+fig
+
+```
+
+Interaktywny wykres umożliwia szczegółowe badanie zmian cen z możliwością powiększenia wybranych obszarów.
+
+# Podsumowanie
+
+-   **Trendy długoterminowe**: Średnia krocząca pokazuje, że ceny podlegały długoterminowym trendom wzrostowym i spadkowym.
+
+-   **Wolumen transakcji**: Okresy wysokiego wolumenu transakcji mogą wskazywać na istotne wydarzenia rynkowe.
+
+-   **Zmienność cen**: Duże różnice między **High** a **Low** mogą oznaczać zwiększoną niepewność i ryzyko na rynku.
+
+-   **Korelacja zmiennych**: Ceny maksymalne (**High**) i minimalne (**Low**) są silnie skorelowane z ceną zamknięcia (**Close**).
